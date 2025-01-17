@@ -1,12 +1,16 @@
 package bgu.spl.net.srv;
-import java.util.concurrent.*;;
+import java.util.concurrent.*;
 
 public class ConnectionsImpl<T> implements Connections<T> {
-    private ConcurrentHashMap<Integer, ConnectionHandler<T>> connections;
+    private ConcurrentHashMap<Integer, ConnectionHandler<T>> connections = new ConcurrentHashMap<>();
     private ConcurrentHashMap<String, CopyOnWriteArrayList<Integer>> topics = new ConcurrentHashMap<>();
+    private static ConnectionsImpl<?> instance = null;
 
-    public ConnectionsImpl() {
-        connections = new ConcurrentHashMap<>();
+    public static synchronized <T> ConnectionsImpl<T> getInstance() {
+        if (instance == null) {
+            instance = new ConnectionsImpl<>();
+        }
+        return (ConnectionsImpl<T>) instance;
     }
 
     @Override
@@ -40,6 +44,12 @@ public class ConnectionsImpl<T> implements Connections<T> {
     public void subscribe(int connectionId, String channel) {
         topics.putIfAbsent(channel, new CopyOnWriteArrayList<>());
         topics.get(channel).add(connectionId);
+    }
+
+    public void unsubscribe(int connectionId, String channel) {
+        if (topics.containsKey(channel)) {
+            topics.get(channel).remove(connectionId);
+        }
     }
     
 }
