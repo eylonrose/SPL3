@@ -11,8 +11,10 @@ import bgu.spl.net.srv.Server;
 public class StompServer {
 
     public static void main(String[] args) {
-        int port = Integer.parseInt(args[0]);
-        String serverType = args[1];
+        //int port = Integer.parseInt(args[0]);
+        //String serverType = args[1];
+        int port = 7777;
+        String serverType = "tpc"; 
         BaseServer<String> server;
 
         if (serverType.equals("tpc")) {

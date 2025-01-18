@@ -1,9 +1,11 @@
 package bgu.spl.net.srv;
 import java.util.concurrent.*;
+import bgu.spl.net.impl.stomp.User;
 
 public class ConnectionsImpl<T> implements Connections<T> {
     private ConcurrentHashMap<Integer, ConnectionHandler<T>> connections = new ConcurrentHashMap<>();
-    private ConcurrentHashMap<String, CopyOnWriteArrayList<Integer>> topics = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, CopyOnWriteArrayList<User>> topics = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<User, Boolean> users = new ConcurrentHashMap<>();
     private static ConnectionsImpl<?> instance = null;
 
     public static synchronized <T> ConnectionsImpl<T> getInstance() {
@@ -25,9 +27,11 @@ public class ConnectionsImpl<T> implements Connections<T> {
 
     @Override
     public void send(String channel, T msg) {
-        for (ConnectionHandler<T> connection : connections.values()) {
-            if (connection.getChannel().equals(channel)) {
-                connection.send(msg);
+        if (topics.containsKey(channel)) {
+            for (User user : topics.get(channel)) {
+                if (users.get(user)) {
+                    send(user.getConnectionId(), msg);
+                }
             }
         }
     }
@@ -35,20 +39,39 @@ public class ConnectionsImpl<T> implements Connections<T> {
     @Override
     public void disconnect(int connectionId) {
         connections.remove(connectionId);
+        for (User user : users.keySet()) {
+            if(user.getConnectionId() == connectionId) {
+                users.put(user, false);
+            }
+        }
     }
 
-    public void addConnection(int connectionId, ConnectionHandler<T> connectionHandler) {
+    public void addConnection(int connectionId, ConnectionHandler<T> connectionHandler, User user) {
         connections.put(connectionId, connectionHandler);
+        users.put(user, true);
+        user.setConnectionId(connectionId);
     }
 
     public void subscribe(int connectionId, String channel) {
         topics.putIfAbsent(channel, new CopyOnWriteArrayList<>());
-        topics.get(channel).add(connectionId);
+        for (User user : users.keySet()) {
+            if(user.getConnectionId() == connectionId) {
+                if (!user.isSubscribed(channel)) {
+                    user.addTopic(channel, topics.get(channel).size());
+                    topics.get(channel).add(user);
+                }
+            }
+        }
     }
 
     public void unsubscribe(int connectionId, String channel) {
-        if (topics.containsKey(channel)) {
-            topics.get(channel).remove(connectionId);
+        for (User user : users.keySet()) {
+            if(user.getConnectionId() == connectionId) {
+                if (user.isSubscribed(channel)) {
+                    topics.get(channel).remove(user);
+                    user.removeTopic(channel);
+                }
+            }
         }
     }
     

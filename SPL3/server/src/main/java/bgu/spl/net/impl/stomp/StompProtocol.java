@@ -1,16 +1,19 @@
 package bgu.spl.net.impl.stomp;
+import java.sql.Connection;
 import java.util.concurrent.ConcurrentHashMap;
 
 import bgu.spl.net.api.StompMessagingProtocol;
 import bgu.spl.net.srv.Connections;
 import bgu.spl.net.srv.ConnectionsImpl;
+import bgu.spl.net.srv.ConnectionHandler;
 
 
 public class StompProtocol implements StompMessagingProtocol<String> {
     private boolean shouldTerminate = false;
     private int connectionId;
-    private ConnectionsImpl<String> connections;
+    private ConnectionsImpl<String> connections = ConnectionsImpl.getInstance();
     private ConcurrentHashMap<User, Boolean> users = new ConcurrentHashMap<>();
+    private ConnectionHandler<String> handler;
     /*@Override
     public void start(int connectionId, ConnectionsImpl<String> connections) {
         this.connectionId = connectionId;
@@ -82,9 +85,10 @@ public class StompProtocol implements StompMessagingProtocol<String> {
         return shouldTerminate;
     }*/
     @Override
-    public void start(int connectionId, ConnectionsImpl<String> connections) {
+    public void start(int connectionId, ConnectionsImpl<String> connections, ConnectionHandler<String> handler) {
         this.connectionId = connectionId;
         this.connections = connections;
+        this.handler = handler;
     }
 
     @Override
@@ -112,7 +116,7 @@ public class StompProtocol implements StompMessagingProtocol<String> {
         
         String username = extractHeader(parts, "login");
         String password = extractHeader(parts, "passcode");
-        if(users.get(new User(username, password))){
+        if(users.containsKey(new User(username, password))){
             handleError("User already logged in", parts);
             return null;
         }
@@ -122,7 +126,7 @@ public class StompProtocol implements StompMessagingProtocol<String> {
                 return null;
             }
         }
-        connections.send(connectionId, "CONNECTED\nversion:1.2\n\n\u0000");
+        connections.addConnection(connectionId, handler, new User(username, password));
         return "CONNECTED\nversion:1.2\n\n\u0000";  // Response to be sent
     }
 
@@ -134,7 +138,14 @@ public class StompProtocol implements StompMessagingProtocol<String> {
 
     private String handleSend(String[] parts) {
         String channel = extractHeader(parts, "destination");
-        String body = parts[parts.length - 1];
+        for(User user : users.keySet()){
+            if(user.getConnectionId()==connectionId){
+                if (!user.isSubscribed(channel)) {
+                    return handleError("User is not subscribed to the channel", parts);
+                }           
+            }
+        }
+        String body = "MESSAGE\ndestination:"+channel+"\nuser:"+extractHeader(parts, "user")+"\ncity:"+extractHeader(parts, "city") +"\nevent name:"+extractHeader(parts, "event name")+"\ndate time:"+extractHeader(parts, "date time") +"\nactive:"+extractHeader(parts, "active") +"\nforces:"+extractHeader(parts, "forces_arrival_at_scene") +"\ndesc:"+extractHeader(parts, "description")+"\u0000";
         connections.send(channel, body);
         return null;
     }
