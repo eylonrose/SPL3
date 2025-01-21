@@ -1,27 +1,19 @@
-CFLAGS:=-c -Wall -Weffc++ -g -std=c++11 -Iinclude
-LDFLAGS:=-lboost_system -lpthread
-# TODO change the makefile for StompEMIlient
-all: EchoClient
+all: link
 
-EchoClient: bin/ConnectionHandler.o bin/echoClient.o
-	g++ -o bin/EchoClient bin/ConnectionHandler.o bin/echoClient.o $(LDFLAGS)
+link: compile
+	g++ -o bin/StompEMIClient bin/ConnectionHandler.o bin/event.o bin/keyboardInput.o bin/Message.o bin/SharedQueue.o bin/StompClient.o bin/StompProtocol.o -lboost_system -lboost_thread -lboost_chrono -lboost_locale -lboost_iostreams -lboost_date_time -lboost_regex -pthread
 
-StompWCIClient: bin/ConnectionHandler.o bin/StompClient.obin/event.o
-	g++ -o bin/StompWCIClient bin/ConnectionHandler.o bin/StompClient.o $(LDFLAGS)
+compile: src/ConnectionHandler.cpp src/event.cpp src/keyboardInput.cpp src/Message.cpp src/SharedQueue.cpp src/StompClient.cpp src/StompProtocol.cpp 
+	g++ -g -Wall -Weffc++ -std=c++11 -Iinclude -o bin/event.o -c src/event.cpp
+	g++ -g -Wall -Weffc++ -std=c++11 -c -Iinclude -o bin/ConnectionHandler.o src/ConnectionHandler.cpp
+	g++ -g -Wall -Weffc++ -std=c++11 -c -Iinclude -o bin/keyboardInput.o src/keyboardInput.cpp
+	g++ -g -Wall -Weffc++ -std=c++11 -c -Iinclude -o bin/Message.o src/Message.cpp
+	g++ -g -Wall -Weffc++ -std=c++11 -c -Iinclude -o bin/SharedQueue.o src/SharedQueue.cpp
+	g++ -g -Wall -Weffc++ -std=c++11 -c -Iinclude -o bin/StompClient.o src/StompClient.cpp
+	g++ -g -Wall -Weffc++ -std=c++11 -c -Iinclude -o bin/StompProtocol.o src/StompProtocol.cpp
 
-bin/ConnectionHandler.o: src/ConnectionHandler.cpp
-	g++ $(CFLAGS) -o bin/ConnectionHandler.o src/ConnectionHandler.cpp
-
-bin/echoClient.o: src/echoClient.cpp
-	g++ $(CFLAGS) -o bin/echoClient.o src/echoClient.cpp
-
-bin/event.o: src/event.cpp
-	g++ $(CFLAGS) -o bin/event.o src/event.cpp
-
-bin/StompClient.o: src/StompClient.cpp
-	g++ $(CFLAGS) -o bin/StompClient.o src/StompClient.cpp
-
-.PHONY: clean
+run: 
+	./bin/StompEMIClient
 clean:
 	rm -f bin/*
 	

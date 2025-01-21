@@ -34,6 +34,7 @@ public:
     const std::string &get_name() const;
     int get_date_time() const;
     const std::map<std::string, std::string> &get_general_information() const;
+    void split_str(const std::string &s, char delim, std::vector<std::string> &elems);
 };
 
 // an object that holds the names of the teams and a vector of events, to be returned by the parseEventsFile function

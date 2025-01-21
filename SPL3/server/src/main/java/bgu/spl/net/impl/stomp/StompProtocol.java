@@ -176,7 +176,7 @@ public class StompProtocol implements StompMessagingProtocol<String> {
     }
 
     private String getParts(String[] parts){
-        String ans = "";
+        String ans = "\n";
         for (String part : parts) {
             ans = ans + part + "\n";
         }

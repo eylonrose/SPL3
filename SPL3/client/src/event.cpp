@@ -7,8 +7,9 @@
 #include <vector>
 #include <sstream>
 #include <cstring>
+#include "event.h"
 
-#include "../include/keyboardInput.h"
+
 
 using namespace std;
 using json = nlohmann::json;
@@ -57,6 +58,15 @@ const std::map<std::string, std::string> &Event::get_general_information() const
     return this->general_information;
 }
 
+void Event::split_str(const std::string &s, char delim, std::vector<std::string> &elems)
+{
+    std::stringstream ss(s);
+    std::string item;
+    while (std::getline(ss, item, delim))
+    {
+        elems.push_back(item);
+    }
+}
 const std::string &Event::get_description() const
 {
     return this->description;

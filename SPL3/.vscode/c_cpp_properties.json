@@ -3,6 +3,8 @@
         {
             "name": "Linux",
             "includePath": [
+                "${workspaceFolder}/client/include",
+                "${workspaceFolder}/client/src",
                 "${workspaceFolder}/**"
             ],
             "defines": [],

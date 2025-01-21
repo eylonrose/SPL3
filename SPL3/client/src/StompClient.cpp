@@ -1,25 +1,18 @@
-#include "../include/Client.h"
 #include <iostream>
-#include <sstream> 
+#include <sstream>
+#include "keyboardInput.h"
+#include <thread>
+#include "StompProtocol.h"
+#include "SharedQueue.h"
 
 
 int main(int argc, char *argv[]) {
-	
-
-    if (argc < 3) {
-        std::cerr << "Usage: " << argv[0] << " <host> <port>" << std::endl;
-        return 1;
-    }
-
-    std::string host = argv[1];
-    int port = std::stoi(argv[2]);
-
-    Client client(host, port);
-    if (client.connect()) {
-        client.run();
-    } else {
-        std::cerr << "Failed to start client" << std::endl;
-    }
-
+    SharedQueue* sharedQueue = new SharedQueue();
+    KeyboardInput* keyboardInput = new KeyboardInput(sharedQueue);
+    StompProtocol* stompProtocol = new StompProtocol(sharedQueue);
+    std::thread keyboardThread(*keyboardInput);
+    std::thread stompThread(*stompProtocol);
+    keyboardThread.join();
+    stompThread.join();
     return 0;
 }
