@@ -20,6 +20,7 @@ private:
     std::string frame;
     bool loggedIn;
     std::map<std::string, std::vector<Message>> messages;
+    std::string name;
 
 public:
     StompProtocol(SharedQueue* sharedQueue);

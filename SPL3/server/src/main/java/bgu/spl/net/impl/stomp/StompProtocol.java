@@ -14,6 +14,7 @@ public class StompProtocol implements StompMessagingProtocol<String> {
     private ConnectionsImpl<String> connections = ConnectionsImpl.getInstance();
     private ConcurrentHashMap<User, Boolean> users = new ConcurrentHashMap<>();
     private ConnectionHandler<String> handler;
+    private ConcurrentHashMap<Integer, String> topics = new ConcurrentHashMap<>();
     /*@Override
     public void start(int connectionId, ConnectionsImpl<String> connections) {
         this.connectionId = connectionId;
@@ -132,6 +133,8 @@ public class StompProtocol implements StompMessagingProtocol<String> {
 
     private String handleSubscribe(String[] parts) {
         String channel = extractHeader(parts, "destination");
+        int id = Integer.parseInt(extractHeader(parts, "id"));
+        topics.put(id, channel);
         connections.subscribe(connectionId, channel);
         return "RECEIPT\nreceipt-id:"+ extractHeader(parts, "receipt")+"\n\n\u0000";  // Response to be sent
     }
@@ -161,7 +164,8 @@ public class StompProtocol implements StompMessagingProtocol<String> {
     }
 
     private String handleUnsubscribe(String[] parts) {
-        String channel = extractHeader(parts, "destination");
+        int id = Integer.parseInt(extractHeader(parts, "id"));
+        String channel = topics.get(id);
         connections.unsubscribe(connectionId, channel);
         return "RECEIPT\nreceipt-id:"+ extractHeader(parts, "receipt")+"\n\n\u0000";  // Response to be sent
     }

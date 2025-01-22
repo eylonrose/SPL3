@@ -2,7 +2,7 @@
 #include "event.h"
 #include <fstream>
 
-StompProtocol::StompProtocol(SharedQueue* sharedQueue): connectionHandler(nullptr),subs(nullptr),sub_id(0),receipt_id(0),sharedQueue(sharedQueue),frame(""),loggedIn(false),messages(){
+StompProtocol::StompProtocol(SharedQueue* sharedQueue): connectionHandler(nullptr),subs(nullptr),sub_id(0),receipt_id(0),sharedQueue(sharedQueue),frame(""),loggedIn(false),messages(),name(""){
     subs = new std::map<std::string, int>();
     sub_id = 0;
     receipt_id = 0;
@@ -51,6 +51,7 @@ void StompProtocol::process()
             connectionHandler->sendFrameAscii(login, '\0');
             std::cout << "Connected to server" << std::endl;
             loggedIn = true;
+            name = tokens[2];
             processServer();
         }
     }
@@ -68,6 +69,7 @@ void StompProtocol::process()
         }
         connectionHandler->close();
         loggedIn = false;
+        subs->clear();
     }
     if(command == "join")
     {
@@ -82,6 +84,7 @@ void StompProtocol::process()
         receipt_id++;
         connectionHandler->sendFrameAscii(join, '\0');
         processServer();
+        std::cout << "Joined channel " << tokens[1] << std::endl;
     }
     if(command == "exit")
     {
@@ -100,6 +103,7 @@ void StompProtocol::process()
         receipt_id++;
         connectionHandler->sendFrameAscii(exit, '\0');
         processServer();
+        std::cout << "Exited channel " << tokens[1] << std::endl;
     }
     if(command == "report")
     {
@@ -116,8 +120,7 @@ void StompProtocol::process()
             int event_date_time = event.get_date_time();
             std::string event_description = event.get_description();
             std::map<std::string, std::string> general_information = event.get_general_information();
-            std::string eventOwnerUser = event.getEventOwnerUser();
-            std::string send = "SEND\ndestination:" + names_and_events.channel_name + "\n" + "user:" + eventOwnerUser + "city:" + event_city + "\n"+ "event name:" + event_name + "\n" +  "date time:" + std::to_string(event_date_time) + "\n" +"general information:\n";
+            std::string send = "SEND\ndestination:" + names_and_events.channel_name + "\n" + "user:" + name + "city:" + event_city + "\n"+ "event name:" + event_name + "\n" +  "date time:" + std::to_string(event_date_time) + "\n" +"general information:\n";
             for(std::pair<std::string, std::string> info : general_information)
             {
                 send += info.first + ":" + info.second + "\n";
