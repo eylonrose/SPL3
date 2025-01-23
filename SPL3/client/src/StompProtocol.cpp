@@ -113,20 +113,26 @@ void StompProtocol::process()
             return;
         }
         names_and_events names_and_events = parseEventsFile(tokens[1]);
+        int size = names_and_events.events.size();
         for(Event event : names_and_events.events)
         {
+            std::cout << "Sending report for event " << event.get_name() << std::endl;
             std::string event_name = event.get_name();
             std::string event_city = event.get_city();
             int event_date_time = event.get_date_time();
             std::string event_description = event.get_description();
             std::map<std::string, std::string> general_information = event.get_general_information();
-            std::string send = "SEND\ndestination:" + names_and_events.channel_name + "\n" + "user:" + name + "city:" + event_city + "\n"+ "event name:" + event_name + "\n" +  "date time:" + std::to_string(event_date_time) + "\n" +"general information:\n";
+            std::string send = "SEND\ndestination:" + names_and_events.channel_name + "\n" + "user:" + name +"\n"+ "city:" + event_city + "\n"+ "event name:" + event_name + "\n" +  "date time:" + std::to_string(event_date_time) + "\n" +"general information:\n";
             for(std::pair<std::string, std::string> info : general_information)
             {
                 send += info.first + ":" + info.second + "\n";
             }
             send += "description:" + event_description + "\n\n";
             connectionHandler->sendFrameAscii(send, '\0');
+        }
+        for(int i = 0; i < size; i++)
+        {
+            std::cout << "Waiting for receipt" << std::endl;
             processServer();
         }
     }
@@ -141,6 +147,7 @@ void StompProtocol::process()
         int active = 0;
         int total = 0;
         std::vector<Message> channel_messages = messages[tokens[1]];
+        std::vector<Message> user_messages;
         for(Message message : channel_messages)
         {
             if(message.getName() == tokens[2])
@@ -154,27 +161,35 @@ void StompProtocol::process()
                 {
                     active++;
                 }
+                user_messages.push_back(message);
             }
         }
+
+        std::sort(user_messages.begin(), user_messages.end(), [](const Message& a, const Message& b) {
+        if (a.getTime() == b.getTime()) {
+            return a.getEvent() < b.getEvent(); // Lexicographic comparison of events
+        }
+        return a.getTime() < b.getTime(); // Compare by time
+    });
+
         std::ofstream outFile(tokens[3], std::ios::trunc);
         outFile << "Channel: " << tokens[1] << std::endl;
         outFile << "Stats:" << std::endl;
         outFile << "Total:" << total << std::endl;
         outFile << "Active:" << active << std::endl;
         outFile << "Forces arrival at scene :" << forces << std::endl;
+        outFile << std::endl;
         outFile << "Event Reports :" << std::endl;
-        for(Message message : channel_messages)
+        int count = 1;
+        for(Message message : user_messages)
         {
-            int count = 1;
-            if(message.getName() == tokens[2])
-            {
+                outFile << std::endl;
                 outFile << "Report_"<< count<<":" << std::endl;
                 outFile << "City:" << message.getCity() << std::endl;
                 outFile << "Date time:" << message.getDateTime() << std::endl;
                 outFile << "Event name:" << message.getEvent() << std::endl;
                 outFile << "Summary:" << message.getContent() << std::endl;
                 count++;
-            }
         }
         outFile.close();
     }
@@ -195,13 +210,17 @@ void StompProtocol::processServer()
             std::string name = split(tokens[2],':')[1];
             std::string city = split(tokens[3],':')[1];
             std::string date_time = split(tokens[5],':')[1];
+            std::string timeint = split(tokens[5],':')[1];
+            std::swap(timeint[1], timeint[5]);
+            std::swap(timeint[2], timeint[6]);
+            int time = std::stoi(timeint);
             date_time = getDate(date_time);
             std::string event = split(tokens[4],':')[1];
             bool active = split(tokens[6],':')[1] == "true";
             bool forces = split(tokens[7],':')[1] == "true";
             std::string content = split(tokens[8],':')[1];
             content = content.substr(0, 27) + "...";
-            Message message(name, content,city,date_time,event, forces, active);
+            Message message(name, content,city,date_time,event, forces, active, time);
             if(messages.find(channel) == messages.end())
             {
                 messages.insert(std::pair<std::string, std::vector<Message>>(channel, std::vector<Message>()));

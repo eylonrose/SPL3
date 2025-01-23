@@ -126,7 +126,14 @@ Event::Event(const std::string &frame_body): channel_name(""), city(""),
 
 names_and_events parseEventsFile(std::string json_path)
 {
+    try{
     std::ifstream f(json_path);
+
+        if (!f.is_open()) {
+            throw std::runtime_error("Error: Unable to open file at " + json_path);
+        }
+
+
     json data = json::parse(f);
 
     std::string channel_name = data["channel_name"];
@@ -153,4 +160,12 @@ names_and_events parseEventsFile(std::string json_path)
     names_and_events events_and_names{channel_name, events};
 
     return events_and_names;
+    }
+    catch (const nlohmann::json::parse_error& e) {
+        std::cerr << "JSON Parsing Error: " << e.what() << std::endl;
+        throw; // Rethrow for higher-level handling
+    } catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+        throw;
+    }
 }
