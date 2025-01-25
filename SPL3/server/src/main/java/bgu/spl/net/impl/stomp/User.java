@@ -1,8 +1,9 @@
 package bgu.spl.net.impl.stomp;
 
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class User implements Comparable<User> {
+public class User{
     private String username;
     private String password;
     private int connectionId;
@@ -20,13 +21,6 @@ public class User implements Comparable<User> {
     public String getPassword() {
         return password;
     }
-
-    @Override
-    public int compareTo(User o) {
-        if(this.username.equals(o.username) && this.password.equals(o.password))
-            return 0;
-        return 1;
-    } 
 
     public void setConnectionId(int connectionId) {
         this.connectionId = connectionId;
@@ -46,6 +40,19 @@ public class User implements Comparable<User> {
 
     public boolean isSubscribed(String topic) {
         return topics.containsKey(topic);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        User user = (User) obj;
+        return username.equals(user.username) && password.equals(user.password);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(username, password);
     }
 
 }

@@ -49,7 +49,11 @@ public class ConnectionsImpl<T> implements Connections<T> {
     public void addConnection(int connectionId, ConnectionHandler<T> connectionHandler, User user) {
         connections.put(connectionId, connectionHandler);
         users.put(user, true);
-        user.setConnectionId(connectionId);
+        for(User u : users.keySet()){
+            if(u.equals(user)){
+                u.setConnectionId(connectionId);
+            }
+        }
     }
 
     public void subscribe(int connectionId, String channel) {
@@ -73,6 +77,10 @@ public class ConnectionsImpl<T> implements Connections<T> {
                 }
             }
         }
+    }
+
+    public ConcurrentHashMap<User, Boolean> getUsers() {
+        return users;
     }
     
 }

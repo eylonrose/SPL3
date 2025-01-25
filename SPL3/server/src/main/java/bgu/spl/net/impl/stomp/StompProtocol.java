@@ -12,79 +12,9 @@ public class StompProtocol implements StompMessagingProtocol<String> {
     private boolean shouldTerminate = false;
     private int connectionId;
     private ConnectionsImpl<String> connections = ConnectionsImpl.getInstance();
-    private ConcurrentHashMap<User, Boolean> users = new ConcurrentHashMap<>();
     private ConnectionHandler<String> handler;
     private ConcurrentHashMap<Integer, String> topics = new ConcurrentHashMap<>();
-    /*@Override
-    public void start(int connectionId, ConnectionsImpl<String> connections) {
-        this.connectionId = connectionId;
-        this.connections = connections;
-
-    }
-
-    @Override
-    public void process(String message) {
-        String[] parts = message.split("\n");
-        String command = parts[0]; 
-
-        switch (command) {
-            case "CONNECT":
-                handleConnect(parts);
-                break;
-            case "SUBSCRIBE":
-                handleSubscribe(parts);
-                break;
-            case "SEND":
-                handleSend(parts);
-                break;
-            case "DISCONNECT":
-                handleDisconnect(parts);
-                break;
-            default:
-                handleError("Unknown command: " + command);
-        }
-    }
-
-    private void handleConnect(String[] parts) {
-        connections.send(connectionId, "CONNECTED\nversion:1.2\n\n\u0000");
-    }
-
-    private void handleSubscribe(String[] parts) {
-        String channel = extractHeader(parts, "destination");
-        connections.subscribe(connectionId, channel);
-        //send(String channel, T msg)
-        connections.send(connectionId, "RECEIPT\nreceipt-id:123\n\n\u0000");
-    }
-
-    private void handleSend(String[] parts) {
-        String channel = extractHeader(parts, "destination");
-        String body = parts[parts.length - 1];
-        connections.send(channel, body);
-    }
-
-    private void handleDisconnect(String[] parts) {
-        shouldTerminate = true;
-        connections.disconnect(connectionId);
-        connections.send(connectionId, "RECEIPT\nreceipt-id:456\n\n\u0000");
-    }
-
-    private void handleError(String errorMessage) {
-        connections.send(connectionId, "ERROR\nmessage:" + errorMessage + "\n\n\u0000");
-    }
-
-    private String extractHeader(String[] parts, String header) {
-        for (String part : parts) {
-            if (part.startsWith(header + ":")) {
-                return part.substring(header.length() + 1).trim();
-            }
-        }
-        return null;
-    }
-
-    @Override
-    public boolean shouldTerminate() {
-        return shouldTerminate;
-    }*/
+    
     @Override
     public void start(int connectionId, ConnectionsImpl<String> connections, ConnectionHandler<String> handler) {
         this.connectionId = connectionId;
@@ -117,14 +47,12 @@ public class StompProtocol implements StompMessagingProtocol<String> {
         
         String username = extractHeader(parts, "login");
         String password = extractHeader(parts, "passcode");
-        if(users.containsKey(new User(username, password))){
-            handleError("User already logged in", parts);
-            return null;
+        if(connections.getUsers().containsKey(new User(username, password))&&connections.getUsers().get(new User(username, password))){
+            return handleError("User already logged in", parts);
         }
-        for(User user : users.keySet()){
+        for(User user : connections.getUsers().keySet()){
             if(user.getUsername().equals(username) && !user.getPassword().equals(password)){
-                handleError("Wrong password", parts);
-                return null;
+                return handleError("Wrong password", parts);
             }
         }
         connections.addConnection(connectionId, handler, new User(username, password));
@@ -141,14 +69,14 @@ public class StompProtocol implements StompMessagingProtocol<String> {
 
     private String handleSend(String[] parts) {
         String channel = extractHeader(parts, "destination");
-        for(User user : users.keySet()){
+        for(User user : connections.getUsers().keySet()){
             if(user.getConnectionId()==connectionId){
                 if (!user.isSubscribed(channel)) {
                     return handleError("User is not subscribed to the channel", parts);
                 }           
             }
         }
-        String body = "MESSAGE\ndestination:"+channel+"\nuser:"+extractHeader(parts, "user")+"\ncity:"+extractHeader(parts, "city") +"\nevent name:"+extractHeader(parts, "event name")+"\ndate time:"+extractHeader(parts, "date time") +"\nactive:"+extractHeader(parts, "active") +"\nforces:"+extractHeader(parts, "forces_arrival_at_scene") +"\ndesc:"+extractHeader(parts, "description")+"\u0000";
+        String body = "MESSAGE\ndestination:"+channel+"\nuser:"+extractHeader(parts, "user")+"\ncity:"+extractHeader(parts, "city") +"\nevent name:"+extractHeader(parts, "event name")+"\ndate time:"+extractHeader(parts, "date time") +"\nactive:"+extractHeader(parts, "active") +"\nforces:"+extractHeader(parts, "forces_arrival_at_scene") +"\ndesc:"+extractHeader(parts, "description")+"\n\n\u0000";
         connections.send(channel, body);
         return null;
     }
@@ -156,11 +84,11 @@ public class StompProtocol implements StompMessagingProtocol<String> {
     private String handleDisconnect(String[] parts) {
         shouldTerminate = true;
         connections.disconnect(connectionId);
-        return "RECEIPT\nreceipt-id:456\n\n\u0000";  // Response
+        return "RECEIPT\nreceipt-id:"+ extractHeader(parts, "receipt")+"\n\n\u0000";  // Response
     }
 
     private String handleError(String errorMessage, String[] parts) {
-        return "ERROR\nmessage:" + errorMessage + getParts(parts) +"\n\u0000";
+        return "ERROR\nmessage:" + errorMessage +"\nerror frame:\n"+ getParts(parts) +"\n\u0000";
     }
 
     private String handleUnsubscribe(String[] parts) {

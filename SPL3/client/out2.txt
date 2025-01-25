@@ -1,0 +1,49 @@
+Channel: police
+Stats:
+Total:7
+Active:5
+Forces arrival at scene :4
+
+Event Reports :
+
+Report_1:
+City:Vice City
+Date time:24/12/24 02:20
+Event name:Hit and Run
+Summary:Black SUV struck a pedestri...
+
+Report_2:
+City:Silent Hill
+Date time:24/12/24 22:15
+Event name:Armed Robbery
+Summary:Two masked suspects armed w...
+
+Report_3:
+City:Pallet Town
+Date time:25/12/24 21:30
+Event name:Assault
+Summary:Male suspect assaulted anot...
+
+Report_4:
+City:Gotham City
+Date time:26/12/24 06:20
+Event name:Drug Possession Arrest
+Summary:Police apprehended a suspec...
+
+Report_5:
+City:Raccoon City
+Date time:31/12/24 21:40
+Event name:Burglary
+Summary:Suspect broke into a reside...
+
+Report_6:
+City:Liberty City
+Date time:31/12/24 21:40
+Event name:Grand Theft Auto
+Summary:Pink Lampadati Felon with l...
+
+Report_7:
+City:Los Alamos
+Date time:31/12/24 21:40
+Event name:Vandalism
+Summary:Multiple cars were spray-pa...

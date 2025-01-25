@@ -14,8 +14,7 @@ public class StompServer {
         //int port = Integer.parseInt(args[0]);
         //String serverType = args[1];
         int port = 7777;
-        String serverType = "reactor"; 
-        BaseServer<String> server;
+        String serverType = "tpc"; 
 
         if (serverType.equals("tpc")) {
             Server.threadPerClient(

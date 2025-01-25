@@ -1,4 +1,5 @@
 #include "../include/ConnectionHandler.h"
+#include <boost/asio/deadline_timer.hpp>
 
 using boost::asio::ip::tcp;
 
@@ -48,6 +49,57 @@ bool ConnectionHandler::getBytes(char bytes[], unsigned int bytesToRead) {
 	return true;
 }
 
+/*bool ConnectionHandler::getBytes(char bytes[], unsigned int bytesToRead) {
+    size_t tmp = 0;
+    boost::system::error_code error;
+    boost::asio::deadline_timer timer(io_service_);
+    bool timeout = false;
+
+    // Set a deadline for the operation (10 seconds)
+    timer.expires_from_now(boost::posix_time::seconds(1));
+
+    // Start the timeout handler (timer callback)
+    timer.async_wait([&](const boost::system::error_code &ec) {
+        if (!ec) {
+            timeout = true;
+            socket_.cancel(); // Cancel the socket operation if timeout occurs
+        }
+    });
+
+    try {
+        // Create a buffer and set the callback for the async_read_some operation
+        boost::asio::async_read(socket_, boost::asio::buffer(bytes, bytesToRead),
+            [&](const boost::system::error_code& ec, std::size_t bytes_transferred) {
+                if (ec) {
+                    error = ec;
+                    return;
+                }
+                tmp += bytes_transferred;
+            });
+
+        // Run io_service to process the asynchronous operation
+        io_service_.run();
+
+        // Handle the timeout condition
+        if (timeout) {
+            //std::cerr << "Socket read timed out" << std::endl;
+            return false; // Exit if timeout occurred
+        }
+
+        if (error) {
+            std::cerr << "recv failed (Error: " << error.message() << ")" << std::endl;
+            return false;
+        }
+
+    } catch (std::exception &e) {
+        std::cerr << "recv failed (Error: " << e.what() << ")" << std::endl;
+        return false;
+    }
+
+    return true;
+}*/
+
+
 bool ConnectionHandler::sendBytes(const char bytes[], int bytesToWrite) {
 	int tmp = 0;
 	boost::system::error_code error;
@@ -80,7 +132,7 @@ bool ConnectionHandler::getFrameAscii(std::string &frame, char delimiter) {
 	try {
 		do {
 			if (!getBytes(&ch, 1)) {
-				std::cout << "getBytes failed" << std::endl;
+				//std::cout << "getBytes failed" << std::endl;
 				return false;
 			}
 			if (ch != '\0')

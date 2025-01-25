@@ -12,24 +12,22 @@
 class StompProtocol
 {
 private:
-    ConnectionHandler* connectionHandler;
     std::map<std::string, int>* subs;
     int sub_id;
     int receipt_id;
-    SharedQueue* sharedQueue;
-    std::string frame;
     bool loggedIn;
     std::map<std::string, std::vector<Message>> messages;
     std::string name;
 
 public:
-    StompProtocol(SharedQueue* sharedQueue);
+    StompProtocol();
     virtual ~StompProtocol();
-    void process();
-    void processServer();
-    void operator()();
+    std::string process(std::string message);
+    bool processServer(std::string frame);
     std::vector<std::string> split(const std::string& str, char delimiter);
-    std::string getDate(std::string date);
+    std::string getDate(int date);
     StompProtocol(const StompProtocol& other) = default;
     StompProtocol& operator=(const StompProtocol& other) = default;
+    bool getLoggedIn() const;
+    void summary(std::string frame);
 };
